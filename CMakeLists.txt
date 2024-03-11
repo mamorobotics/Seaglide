@@ -10,7 +10,7 @@ if (POLICY CMP0141)
   set(CMAKE_CXX_STANDARD 23)
 endif()
 
-project ("Float" VERSION 0.1 DESCRIPTION "An application for MATE-Floats")
+project ("Hoverfish" VERSION 0.1 DESCRIPTION "An application for MATE-Floats")
 
 # Include sub-projects.
-add_subdirectory ("Float")
+add_subdirectory ("Hoverfish")
