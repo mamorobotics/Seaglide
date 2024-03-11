@@ -1,0 +1,5 @@
+/Users/maxlazarus/Documents/GitHub/Float/build/CMakeFiles/edit_cache.dir
+/Users/maxlazarus/Documents/GitHub/Float/build/CMakeFiles/rebuild_cache.dir
+/Users/maxlazarus/Documents/GitHub/Float/build/Float/CMakeFiles/Float.dir
+/Users/maxlazarus/Documents/GitHub/Float/build/Float/CMakeFiles/edit_cache.dir
+/Users/maxlazarus/Documents/GitHub/Float/build/Float/CMakeFiles/rebuild_cache.dir
