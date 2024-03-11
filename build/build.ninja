@@ -81,6 +81,7 @@ build cmake_object_order_depends_target_Float: phony || Float/CMakeFiles/Float.d
 build Float/CMakeFiles/Float.dir/Float.cpp.o: CXX_COMPILER__Float_unscanned_Debug /Users/maxlazarus/Documents/GitHub/Float/Float/Float.cpp || cmake_object_order_depends_target_Float
   DEP_FILE = Float/CMakeFiles/Float.dir/Float.cpp.o.d
   FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk
+  INCLUDES = -I/Users/maxlazarus/Documents/GitHub/Float/Float/lib/RF24
   OBJECT_DIR = Float/CMakeFiles/Float.dir
   OBJECT_FILE_DIR = Float/CMakeFiles/Float.dir
 

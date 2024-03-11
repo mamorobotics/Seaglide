@@ -11,6 +11,7 @@
 		"commands" : 
 		[
 			"add_executable",
+			"include_directories",
 			"set_property"
 		],
 		"files" : 
@@ -31,6 +32,12 @@
 			{
 				"command" : 1,
 				"file" : 0,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
 				"line" : 5,
 				"parent" : 0
 			}
@@ -45,12 +52,19 @@
 					"fragment" : "-g -std=gnu++20 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk"
 				}
 			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 2,
+					"path" : "/Users/maxlazarus/Documents/GitHub/Float/Float/lib/RF24"
+				}
+			],
 			"language" : "CXX",
 			"languageStandard" : 
 			{
 				"backtraces" : 
 				[
-					2
+					3
 				],
 				"standard" : "20"
 			},

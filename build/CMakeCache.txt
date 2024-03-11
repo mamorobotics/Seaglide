@@ -233,6 +233,12 @@ Float_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 Float_SOURCE_DIR:STATIC=/Users/maxlazarus/Documents/GitHub/Float
 
+//The directory containing a CMake configuration file for RF24.
+RF24_DIR:PATH=RF24_DIR-NOTFOUND
+
+//The directory containing a CMake configuration file for rf24.
+rf24_DIR:PATH=rf24_DIR-NOTFOUND
+
 
 ########################
 # INTERNAL cache entries
