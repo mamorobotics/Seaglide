@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/Users/maxlazarus/Documents/GitHub/Float/build",
-  "command": "/usr/bin/clang++ -I/Users/maxlazarus/Documents/GitHub/Float/Float/lib/RF24 -g -std=gnu++20 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk -o Float/CMakeFiles/Float.dir/Float.cpp.o -c /Users/maxlazarus/Documents/GitHub/Float/Float/Float.cpp",
-  "file": "/Users/maxlazarus/Documents/GitHub/Float/Float/Float.cpp",
-  "output": "Float/CMakeFiles/Float.dir/Float.cpp.o"
-}
-]
