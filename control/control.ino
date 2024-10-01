@@ -11,8 +11,6 @@ RF24 radio(CE_PIN, CSN_PIN);
 
 const byte address[6] = "00001";
 
-//NRF24L01 buffer limit is 32 bytes (max struct size) 
-
 struct payload { 
 	 char[4] companyNumber; 
 	 int time;
