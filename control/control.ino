@@ -12,7 +12,7 @@ RF24 radio(CE_PIN, CSN_PIN);
 
 const byte address[6] = "00001";
 
-int stepPin = 4;
+int stepPin = 3;
 int dirPin = 4;
 
 int currentPos = 0;
