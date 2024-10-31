@@ -3,8 +3,8 @@ int dirPin = 3;
 
 int currentPos = 0;
 int neutralPos = 0;
-int floatPos = 200;
-int sinkPos = -200;
+int floatPos = 1000;
+int sinkPos = -1000;
 
 void setup() {
   pinMode(dirPin, OUTPUT);
@@ -63,6 +63,10 @@ void loop() {
 void rotateToPos(int pos){
   if(currentPos == pos){return;}
   int coeff = pos<currentPos ? -1 : 1;
+
+  if(currentPos<0 && coeff==1){
+    currentPos *= -1;
+  }
 
   int steps = currentPos + (coeff * pos);
 
