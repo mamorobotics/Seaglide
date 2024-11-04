@@ -12,26 +12,32 @@ RF24 radio(CE_PIN, CSN_PIN);
 
 const byte address[6] = "00001";
 
-int stepPin = 3;
-int dirPin = 4;
+int stepPin = 2;
+int dirPin = 3;
 
+//stepper pos
 int currentPos = 0;
 int neutralPos = 0;
 int floatPos = 200;
 int sinkPos = -200;
 
+//timing
 float timeAtDepth = 0;
+long startTime = millis();
+long startDepthTime = 0;
+bool firstDepth = true;
 
-struct payload { 
+struct { 
 	 String companyNumber; 
 	 int time;
-   float depth; 
-}; 
+   float pressure; 
+}payloads[50]; 
 
 
 Adafruit_MPRLS mpr = Adafruit_MPRLS(-1, -1);
 
-payload payload; 
+//payload payloads[50];
+int lastStoredIndex = -1;
 
 void setup() 
 { 
@@ -40,7 +46,7 @@ void setup()
   radio.setAutoAck(false);
   radio.setDataRate(RF24_1MBPS); 
   radio.setPALevel(RF24_PA_MAX);
-  radio.setPayloadSize(sizeof(payload)); 
+  radio.setPayloadSize(sizeof(payloads[0])); 
   radio.openWritingPipe(address); 
   radio.stopListening(); 
 
@@ -51,45 +57,58 @@ void setup()
     }
   }
   Serial.println("Found MPRLS sensor");
+
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
 } 
 
 void loop() 
 { 
-	payload.companyNumber = '1234'; 
-	payload.time = 123;
-  payload.depth = mpr.readPressure()/10;
+  float pressure = mpr.readPressure()/10;
 
-	radio.write(&payload, sizeof(payload)); 
-	delay(INTERVAL_MS_TRANSMISSION); 
+  if((millis()-startTime)%5000 >= 0 && (millis()-startTime)%5000 <= 200){
+    lastStoredIndex += 1;
+    payloads[lastStoredIndex].companyNumber = '1234'; 
+	  payloads[lastStoredIndex].time = millis();
+    payloads[lastStoredIndex].pressure = pressure;
+  } 
 
-  if(timeAtDepth>=45){
+  if(timeAtDepth>=45000){
     rotateToPos(floatPos);
   }
-  else if(payload.depth/9.81 >= 2){
+  else if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
+    if(firstDepth){startDepthTime = millis(); firstDepth = false;}
+    else{timeAtDepth += (millis()-startDepthTime);}
     rotateToPos(neutralPos);
-    timeAtDepth++;
   }
-  else if(payload.depth/9.81 <= 0.1){
+  else if(pressure/9.81 <= 0.1){
     rotateToPos(neutralPos);
     sendPayloads();
     timeAtDepth = 0;
+    firstDepth = true;
   }
-
-  rotateToPos(400);
 } 
 
 void sendPayloads(){
-  
+  for(int i=0; i<=lastStoredIndex; i++){
+    radio.write(&payloads[i], sizeof(payloads[i])); 
+	  delay(INTERVAL_MS_TRANSMISSION);
+  }
 }
 
 void rotateToPos(int pos){
+  if(currentPos == pos){return;}
   int coeff = pos<currentPos ? -1 : 1;
+
+  if(currentPos<0 && coeff==1){
+    currentPos *= -1;
+  }
 
   int steps = currentPos + (coeff * pos);
 
   currentPos = pos;
 
-  if(steps < 0){
+  if(coeff == -1){
     digitalWrite(dirPin,HIGH);
   }else{
     digitalWrite(dirPin,LOW);
@@ -101,5 +120,6 @@ void rotateToPos(int pos){
     digitalWrite(stepPin,LOW); 
     delayMicroseconds(500); 
   }
+  Serial.println(currentPos);
   delay(1000);
 }
