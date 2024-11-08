@@ -31,7 +31,7 @@ struct {
 	 String companyNumber; 
 	 int time;
    float pressure; 
-}payloads[50]; 
+}payloads[120]; 
 
 
 Adafruit_MPRLS mpr = Adafruit_MPRLS(-1, -1);
