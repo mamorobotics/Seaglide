@@ -1,4 +1,4 @@
-int stepPin = 2;
+int stepPin = 3;
 int dirPin = 3;
 
 int currentPos = 0;

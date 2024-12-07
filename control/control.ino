@@ -1,54 +1,82 @@
-//https://projecthub.arduino.cc/tmekinyan/how-to-use-the-nrf24l01-module-with-arduino-813957
-
-#include "SPI.h" 
-#include "RF24.h" 
-#include "nRF24L01.h" 
+#include <SPI.h>
+#include <RH_RF95.h>
 #include "Adafruit_MPRLS.h"
-#define CE_PIN 9 
-#define CSN_PIN 10 
-#define INTERVAL_MS_TRANSMISSION 4000 
 
-RF24 radio(CE_PIN, CSN_PIN); 
+// Define pins for the RFM96W
+#define RFM95_CS 10   // Chip select
+#define RFM95_RST 9   // Reset
+#define RFM95_INT 2   // Interrupt
 
-const byte address[6] = "00001";
+// Define frequency (433 MHz)
+#define RF95_FREQ 433.0
 
-int stepPin = 2;
-int dirPin = 3;
+// Create an instance of the driver
+RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
-//stepper pos
+int stepPin = 3;
+int dirPin = 4;
+
 int currentPos = 0;
 int neutralPos = 0;
-int floatPos = 200;
-int sinkPos = -200;
+int floatPos = 1000;
+int sinkPos = -1000;
 
-//timing
-float timeAtDepth = 0;
-long startTime = millis();
+int count = 0;
+
+long startTime;
 long startDepthTime = 0;
+long timeAtDepth = 0;
+bool firstControllerData = true;
 bool firstDepth = true;
 
-struct { 
-	 String companyNumber; 
-	 int time;
+struct {  
+	 float time;
    float pressure; 
 }payloads[120]; 
 
 
 Adafruit_MPRLS mpr = Adafruit_MPRLS(-1, -1);
 
-//payload payloads[50];
 int lastStoredIndex = -1;
 
 void setup() 
 { 
-  Serial.begin(115200); 
-  radio.begin(); 
-  radio.setAutoAck(false);
-  radio.setDataRate(RF24_1MBPS); 
-  radio.setPALevel(RF24_PA_MAX);
-  radio.setPayloadSize(sizeof(payloads[0])); 
-  radio.openWritingPipe(address); 
-  radio.stopListening(); 
+  Serial.begin(9600);
+  while (!Serial) {
+    delay(10); // Wait for Serial monitor to connect
+  }
+  Serial.println("LoRa RFM96W Test");
+
+  // Reset the module
+  pinMode(RFM95_RST, OUTPUT);
+  digitalWrite(RFM95_RST, HIGH);
+  delay(10);
+  digitalWrite(RFM95_RST, LOW);
+  delay(10);
+  digitalWrite(RFM95_RST, HIGH);
+  delay(10);
+
+  // Initialize the radio
+  if (!rf95.init()) {
+    Serial.println("RFM96W LoRa radio init failed");
+    while (1);
+  }
+  Serial.println("RFM96W LoRa radio init OK!");
+
+  // Set frequency
+  if (!rf95.setFrequency(RF95_FREQ)) {
+    Serial.println("Failed to set frequency");
+    while (1);
+  }
+  Serial.print("Frequency set to: ");
+  Serial.println(RF95_FREQ);
+
+  // Set transmitter power
+  rf95.setTxPower(13, false); // 13 dBm
+
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+  pinMode(13, OUTPUT);
 
   if (! mpr.begin()) {
     Serial.println("Failed to communicate with MPRLS sensor, check wiring?");
@@ -57,9 +85,6 @@ void setup()
     }
   }
   Serial.println("Found MPRLS sensor");
-
-  pinMode(dirPin, OUTPUT);
-  pinMode(stepPin, OUTPUT);
 } 
 
 void loop() 
@@ -68,8 +93,7 @@ void loop()
 
   if((millis()-startTime)%5000 >= 0 && (millis()-startTime)%5000 <= 200){
     lastStoredIndex += 1;
-    payloads[lastStoredIndex].companyNumber = '1234'; 
-	  payloads[lastStoredIndex].time = millis();
+	  payloads[lastStoredIndex].time = millis()/60000.0;
     payloads[lastStoredIndex].pressure = pressure;
   } 
 
@@ -77,23 +101,44 @@ void loop()
     rotateToPos(floatPos);
   }
   else if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
-    if(firstDepth){startDepthTime = millis(); firstDepth = false;}
-    else{timeAtDepth += (millis()-startDepthTime);}
+    if(firstDepth){
+      startDepthTime = millis(); 
+      firstDepth = false;
+    }
+    else{
+      timeAtDepth += (millis()-startDepthTime);
+    }
     rotateToPos(neutralPos);
-  }
-  else if(pressure/9.81 <= 0.1){
+  } else if(pressure/9.81 <= 0.1){
     rotateToPos(neutralPos);
     sendPayloads();
     timeAtDepth = 0;
     firstDepth = true;
+    lastStoredIndex = 0;
+  } else if(pressure/9.81 > 3){
+    rotateToPos(floatPos);
+    timeAtDepth = 0;
+    firstDepth = true;
+    lastStoredIndex = 0;
   }
 } 
 
 void sendPayloads(){
   for(int i=0; i<=lastStoredIndex; i++){
-    radio.write(&payloads[i], sizeof(payloads[i])); 
-	  delay(INTERVAL_MS_TRANSMISSION);
+    String dataString = "RN01!";
+    dataString = dataString + payloads[i].time;
+    dataString = dataString + "!";
+    dataString = dataString + payloads[i].pressure;
+
+    uint8_t data[dataString.length() + 1];
+    memcpy(data, dataString.c_str(), dataString.length() + 1);
+
+    rf95.send(data, sizeof(data)); 
+	  rf95.waitPacketSent();
+    delay(500);
   }
+
+  memset(payloads, 0, sizeof(payloads));
 }
 
 void rotateToPos(int pos){
