@@ -99,28 +99,56 @@ void loop()
 
   if(timeAtDepth>=45000){
     rotateToPos(floatPos);
-  }
-  else if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
-    if(firstDepth){
-      startDepthTime = millis(); 
-      firstDepth = false;
+
+    if(pressure/9.81 <= 0.1){
+      rotateToPos(neutralPos);
+      sendPayloads();
+      timeAtDepth = 0;
+      firstDepth = true;
+      lastStoredIndex = 0;
     }
-    else{
-      timeAtDepth += (millis()-startDepthTime);
+  } else{
+    int pos = getPos(pressure/9.81);
+    rotateToPos(pos);
+    if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
+      if(firstDepth){
+        startDepthTime = millis(); 
+        firstDepth = false;
+      }else{
+        timeAtDepth += (millis()-startDepthTime);
+      }
+    }else
+      timeAtDepth = 0;
+      firstDepth = true;
+      lastStoredIndex = 0;
     }
-    rotateToPos(neutralPos);
-  } else if(pressure/9.81 <= 0.1){
-    rotateToPos(neutralPos);
-    sendPayloads();
-    timeAtDepth = 0;
-    firstDepth = true;
-    lastStoredIndex = 0;
-  } else if(pressure/9.81 > 3){
-    rotateToPos(floatPos);
-    timeAtDepth = 0;
-    firstDepth = true;
-    lastStoredIndex = 0;
   }
+  // else if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
+  //   if(firstDepth){
+  //     startDepthTime = millis(); 
+  //     firstDepth = false;
+  //   }
+  //   else{
+  //     timeAtDepth += (millis()-startDepthTime);
+  //   }
+  //   rotateToPos(neutralPos);
+  // } else if(pressure/9.81 <= 0.1){
+  //   rotateToPos(neutralPos);
+  //   sendPayloads();
+  //   timeAtDepth = 0;
+  //   firstDepth = true;
+  //   lastStoredIndex = 0;
+  // } else if(pressure/9.81 > 3){
+  //   rotateToPos(floatPos/2);
+  //   timeAtDepth = 0;
+  //   firstDepth = true;
+  //   lastStoredIndex = 0;
+  // }else if(pressure/9.81 > 1 && timeAtDepth <= 45000){
+  //   rotateToPos(sinkPos/2);
+  //   timeAtDepth = 0;
+  //   firstDepth = true;
+  //   lastStoredIndex = 0;
+  // }
 } 
 
 void sendPayloads(){
@@ -167,4 +195,12 @@ void rotateToPos(int pos){
   }
   Serial.println(currentPos);
   delay(1000);
+}
+int getPos(int depth){
+  int maxVal = 1000;
+  int pow = 7;
+
+  int coeff = ((-1)/Math.pow((-1),pow))*maxVal;
+  int pos = Math.pow((depth-2.5), pow);
+  return coeff*pos;
 }
