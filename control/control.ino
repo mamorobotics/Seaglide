@@ -1,4 +1,5 @@
 #include <SPI.h>
+#include <Wire.h>
 #include <RH_RF95.h>
 #include "Adafruit_MPRLS.h"
 
@@ -18,8 +19,7 @@ int dirPin = 4;
 
 int currentPos = 0;
 int neutralPos = 0;
-int floatPos = 1000;
-int sinkPos = -1000;
+int floatPos = 0;
 
 int count = 0;
 
@@ -29,7 +29,7 @@ long timeAtDepth = 0;
 bool firstControllerData = true;
 bool firstDepth = true;
 
-struct {  
+struct payload{  
 	 float time;
    float pressure; 
 }payloads[120]; 
@@ -56,6 +56,8 @@ void setup()
   digitalWrite(RFM95_RST, HIGH);
   delay(10);
 
+  Wire.begin();
+
   // Initialize the radio
   if (!rf95.init()) {
     Serial.println("RFM96W LoRa radio init failed");
@@ -78,23 +80,32 @@ void setup()
   pinMode(stepPin, OUTPUT);
   pinMode(13, OUTPUT);
 
-  if (! mpr.begin()) {
+  if (!mpr.begin()) {
     Serial.println("Failed to communicate with MPRLS sensor, check wiring?");
     while (1) {
       delay(10);
     }
   }
   Serial.println("Found MPRLS sensor");
+  delay(100);
 } 
 
 void loop() 
 { 
-  float pressure = mpr.readPressure()/10;
-
+  float pressure = mpr.readPressure()/10.0;
+  Serial.println(pressure);
+  
   if((millis()-startTime)%5000 >= 0 && (millis()-startTime)%5000 <= 200){
     lastStoredIndex += 1;
 	  payloads[lastStoredIndex].time = millis()/60000.0;
     payloads[lastStoredIndex].pressure = pressure;
+
+    if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
+      if(firstDepth){
+        startDepthTime = millis(); 
+        firstDepth = false;
+      }
+    }
   } 
 
   if(timeAtDepth>=45000){
@@ -107,22 +118,21 @@ void loop()
       firstDepth = true;
       lastStoredIndex = 0;
     }
-  } else{
+  } 
+  else{
     int pos = getPos(pressure/9.81);
     rotateToPos(pos);
-    if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
-      if(firstDepth){
-        startDepthTime = millis(); 
-        firstDepth = false;
-      }else{
+    if(pressure/9.81 >= 2 && pressure/9.81 <= 3 && !firstDepth){
         timeAtDepth += (millis()-startDepthTime);
-      }
-    }else
+    }else{
       timeAtDepth = 0;
       firstDepth = true;
       lastStoredIndex = 0;
     }
   }
+
+  //end skibidi
+
   // else if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
   //   if(firstDepth){
   //     startDepthTime = millis(); 
@@ -152,32 +162,32 @@ void loop()
 } 
 
 void sendPayloads(){
+  Serial.println("sending");
   for(int i=0; i<=lastStoredIndex; i++){
     String dataString = "RN01!";
-    dataString = dataString + payloads[i].time;
-    dataString = dataString + "!";
-    dataString = dataString + payloads[i].pressure;
+    payload p = payloads[i];
+    Serial.println(p.pressure);
+    //dataString = dataString + str;
+    // dataString = dataString + "!";
+    // dataString = dataString + payloads[i].pressure;
 
-    uint8_t data[dataString.length() + 1];
-    memcpy(data, dataString.c_str(), dataString.length() + 1);
+    // uint8_t data[dataString.length() + 1];
+    // memcpy(data, dataString.c_str(), dataString.length() + 1);
 
-    rf95.send(data, sizeof(data)); 
-	  rf95.waitPacketSent();
-    delay(500);
+    // rf95.send(data, sizeof(data)); 
+	  // rf95.waitPacketSent();
+    // delay(500);
   }
 
-  memset(payloads, 0, sizeof(payloads));
+  //memset(payloads, 0, sizeof(payloads));
 }
 
 void rotateToPos(int pos){
+  pos = constrain(pos, 50, 3200);
   if(currentPos == pos){return;}
   int coeff = pos<currentPos ? -1 : 1;
 
-  if(currentPos<0 && coeff==1){
-    currentPos *= -1;
-  }
-
-  int steps = currentPos + (coeff * pos);
+  int steps = abs(pos - currentPos);
 
   currentPos = pos;
 
@@ -193,14 +203,12 @@ void rotateToPos(int pos){
     digitalWrite(stepPin,LOW); 
     delayMicroseconds(500); 
   }
-  Serial.println(currentPos);
-  delay(1000);
+  delay(500);
 }
-int getPos(int depth){
-  int maxVal = 1000;
-  int pow = 7;
 
-  int coeff = ((-1)/Math.pow((-1),pow))*maxVal;
-  int pos = Math.pow((depth-2.5), pow);
-  return coeff*pos;
+int getPos(int depth){
+  int power = 7;
+
+  int pos = -1 * pow((depth-2.5), power) + 1575;
+  return constrain(pos, 50, 3200);
 }
