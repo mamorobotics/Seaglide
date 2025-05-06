@@ -3,19 +3,8 @@
 #include <RH_RF95.h>
 #include "Adafruit_MPRLS.h"
 
-// Define pins for the RFM96W
-#define RFM95_CS 10   // Chip select
-#define RFM95_RST 9   // Reset
-#define RFM95_INT 2   // Interrupt
-
-// Define frequency (433 MHz)
-#define RF95_FREQ 433.0
-
 // Create an instance of the driver
-RH_RF95 rf95(RFM95_CS, RFM95_INT);
-
-int stepPin = 3;
-int dirPin = 4;
+RH_RF95 rf95(10, 2);
 
 int currentPos = 0;
 int neutralPos = 0;
@@ -30,8 +19,8 @@ bool firstControllerData = true;
 bool firstDepth = true;
 
 struct payload{  
-	 float time;
-   float pressure; 
+	 int time;
+   int pressure; 
 }payloads[120]; 
 
 
@@ -48,12 +37,12 @@ void setup()
   Serial.println("LoRa RFM96W Test");
 
   // Reset the module
-  pinMode(RFM95_RST, OUTPUT);
-  digitalWrite(RFM95_RST, HIGH);
+  pinMode(9, OUTPUT);
+  digitalWrite(9, HIGH);
   delay(10);
-  digitalWrite(RFM95_RST, LOW);
+  digitalWrite(9, LOW);
   delay(10);
-  digitalWrite(RFM95_RST, HIGH);
+  digitalWrite(9, HIGH);
   delay(10);
 
   Wire.begin();
@@ -66,18 +55,18 @@ void setup()
   Serial.println("RFM96W LoRa radio init OK!");
 
   // Set frequency
-  if (!rf95.setFrequency(RF95_FREQ)) {
+  if (!rf95.setFrequency(433.0)) {
     Serial.println("Failed to set frequency");
     while (1);
   }
   Serial.print("Frequency set to: ");
-  Serial.println(RF95_FREQ);
+  Serial.println(433.0);
 
   // Set transmitter power
   rf95.setTxPower(13, false); // 13 dBm
 
-  pinMode(dirPin, OUTPUT);
-  pinMode(stepPin, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(3, OUTPUT);
   pinMode(13, OUTPUT);
 
   if (!mpr.begin()) {
@@ -92,12 +81,12 @@ void setup()
 
 void loop() 
 { 
-  float pressure = mpr.readPressure()/10.0;
+  int pressure = int(mpr.readPressure() * 10);
   Serial.println(pressure);
   
   if((millis()-startTime)%5000 >= 0 && (millis()-startTime)%5000 <= 200){
     lastStoredIndex += 1;
-	  payloads[lastStoredIndex].time = millis()/60000.0;
+	  payloads[lastStoredIndex].time = int(millis()/600.0);
     payloads[lastStoredIndex].pressure = pressure;
 
     if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
@@ -192,15 +181,15 @@ void rotateToPos(int pos){
   currentPos = pos;
 
   if(coeff == -1){
-    digitalWrite(dirPin,HIGH);
+    digitalWrite(4,HIGH);
   }else{
-    digitalWrite(dirPin,LOW);
+    digitalWrite(4,LOW);
   }
 
   for(int x = 0; x < steps; x++) {
-    digitalWrite(stepPin,HIGH); 
+    digitalWrite(3,HIGH); 
     delayMicroseconds(500); 
-    digitalWrite(stepPin,LOW); 
+    digitalWrite(3,LOW); 
     delayMicroseconds(500); 
   }
   delay(500);
