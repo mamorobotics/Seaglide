@@ -153,19 +153,16 @@ void loop()
 void sendPayloads(){
   Serial.println("sending");
   for(int i=0; i<=lastStoredIndex; i++){
-    String dataString = "RN01!";
-    payload p = payloads[i];
-    Serial.println(p.pressure);
-    //dataString = dataString + str;
-    // dataString = dataString + "!";
-    // dataString = dataString + payloads[i].pressure;
+    String dataString = "~RN01!";
+    dataString = dataString + ((millis()-startTime)/1000.0/60.0);
+    dataString = dataString + "!";
+    dataString = dataString + (mpr.readPressure()*10);
+    uint8_t data[dataString.length() + 1]; // +1 for the null terminator
+    memcpy(data, dataString.c_str(), dataString.length() + 1);
 
-    // uint8_t data[dataString.length() + 1];
-    // memcpy(data, dataString.c_str(), dataString.length() + 1);
-
-    // rf95.send(data, sizeof(data)); 
-	  // rf95.waitPacketSent();
-    // delay(500);
+    rf95.send(data, sizeof(data)); 
+	  rf95.waitPacketSent();
+    delay(500);
   }
 
   //memset(payloads, 0, sizeof(payloads));
