@@ -7,8 +7,8 @@
 RH_RF95 rf95(10, 2);
 
 int currentPos = 0;
-int neutralPos = 0;
-int floatPos = 0;
+int neutralPos = 1700;
+int floatPos = 3200;
 
 int count = 0;
 
@@ -83,13 +83,14 @@ void loop()
 { 
   int pressure = int(mpr.readPressure() * 10);
   Serial.println(pressure);
+  float depth = (float(pressure) - 1000.0)/10000.0/9.81;
   
   if((millis()-startTime)%5000 >= 0 && (millis()-startTime)%5000 <= 200){
     lastStoredIndex += 1;
 	  payloads[lastStoredIndex].time = int(millis()/600.0);
     payloads[lastStoredIndex].pressure = pressure;
 
-    if(pressure/9.81 >= 2 && pressure/9.81 <= 3){
+    if(depth >= 2 && depth <= 3){
       if(firstDepth){
         startDepthTime = millis(); 
         firstDepth = false;
@@ -100,7 +101,7 @@ void loop()
   if(timeAtDepth>=45000){
     rotateToPos(floatPos);
 
-    if(pressure/9.81 <= 0.1){
+    if(depth <= 0.1){
       rotateToPos(neutralPos);
       sendPayloads();
       timeAtDepth = 0;
@@ -109,9 +110,9 @@ void loop()
     }
   } 
   else{
-    int pos = getPos(pressure/9.81);
+    int pos = getPos(depth);
     rotateToPos(pos);
-    if(pressure/9.81 >= 2 && pressure/9.81 <= 3 && !firstDepth){
+    if(depth >= 2 && depth <= 3 && !firstDepth){
         timeAtDepth += (millis()-startDepthTime);
     }else{
       timeAtDepth = 0;
@@ -162,7 +163,7 @@ void sendPayloads(){
 
     rf95.send(data, sizeof(data)); 
 	  rf95.waitPacketSent();
-    delay(500);
+    delay(50);
   }
 
   //memset(payloads, 0, sizeof(payloads));
@@ -195,6 +196,6 @@ void rotateToPos(int pos){
 int getPos(int depth){
   int power = 7;
 
-  int pos = -1 * pow((depth-2.5), power) + 1575;
+  int pos = -1 * pow((depth-2.5), power) + neutralPos;
   return constrain(pos, 50, 3200);
 }
