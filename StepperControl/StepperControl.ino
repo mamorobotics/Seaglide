@@ -2,9 +2,9 @@ int stepPin = 3;
 int dirPin = 3;
 
 int currentPos = 0;
-int neutralPos = 0;
-int floatPos = 1000;
-int sinkPos = -1000;
+int neutralPos = 1700;
+int floatPos = 50;
+int sinkPos = 3200;
 
 void setup() {
   pinMode(dirPin, OUTPUT);
@@ -15,18 +15,18 @@ void setup() {
 }
 
 void loop() {
-  // digitalWrite(dirPin, HIGH);
-  // digitalWrite(13, HIGH);
+  digitalWrite(dirPin, HIGH);
+  digitalWrite(13, HIGH);
 
-	// // Spin motor slowly
-	// for(int x = 0; x < 400; x++)
-	// {
-	// 	digitalWrite(stepPin, HIGH);
-	// 	delayMicroseconds(2000);
-	// 	digitalWrite(stepPin, LOW);
-	// 	delayMicroseconds(2000);
-	// }
-	// delay(1000); // Wait a second
+	// Spin motor slowly
+	for(int x = 0; x < 400; x++)
+	{
+		digitalWrite(stepPin, HIGH);
+		delayMicroseconds(2000);
+		digitalWrite(stepPin, LOW);
+		delayMicroseconds(2000);
+	}
+	delay(1000); // Wait a second
 	
 	// // Set motor direction counterclockwise
 	// digitalWrite(dirPin, LOW);

@@ -108,13 +108,12 @@ void loop()
       firstDepth = true;
       lastStoredIndex = 0;
     }
-  } 
-  else{
+  } else{
     int pos = getPos(depth);
     rotateToPos(pos);
     if(depth >= 2 && depth <= 3 && !firstDepth){
         timeAtDepth += (millis()-startDepthTime);
-    }else{
+    } else {
       timeAtDepth = 0;
       firstDepth = true;
       lastStoredIndex = 0;
