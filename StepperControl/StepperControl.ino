@@ -1,5 +1,5 @@
 int stepPin = 3;
-int dirPin = 3;
+int dirPin = 13;
 
 int currentPos = 0;
 int neutralPos = 1700;
@@ -15,8 +15,8 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(dirPin, HIGH);
-  digitalWrite(13, HIGH);
+  digitalWrite(dirPin, LOW);
+  //digitalWrite(13, HIGH);
 
 	// Spin motor slowly
 	for(int x = 0; x < 400; x++)

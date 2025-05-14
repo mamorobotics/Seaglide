@@ -8,7 +8,7 @@ RH_RF95 rf95(10, 2);
 
 int currentPos = 0;
 int neutralPos = 1700;
-int floatPos = 3200;
+int floatPos = 50;
 
 int count = 0;
 
@@ -76,14 +76,26 @@ void setup()
     }
   }
   Serial.println("Found MPRLS sensor");
-  delay(100);
+  delay(600000);
+
+
+  String dataString = "~RN01!";
+  dataString = dataString + ((millis()-startTime)/1000.0/60.0);
+  dataString = dataString + "!";
+  dataString = dataString + (mpr.readPressure()*10);
+  uint8_t data[dataString.length() + 1]; // +1 for the null terminator
+  memcpy(data, dataString.c_str(), dataString.length() + 1);
+
+  rf95.send(data, sizeof(data)); 
+  rf95.waitPacketSent();
+  delay(50);
 } 
 
 void loop() 
 { 
   int pressure = int(mpr.readPressure() * 10);
   Serial.println(pressure);
-  float depth = (float(pressure) - 1000.0)/10000.0/9.81;
+  float depth = (float(pressure)/10.0 - 1010.0)/10000.0/9.81;
   
   if((millis()-startTime)%5000 >= 0 && (millis()-startTime)%5000 <= 200){
     lastStoredIndex += 1;
@@ -154,9 +166,9 @@ void sendPayloads(){
   Serial.println("sending");
   for(int i=0; i<=lastStoredIndex; i++){
     String dataString = "~RN01!";
-    dataString = dataString + ((millis()-startTime)/1000.0/60.0);
+    dataString = dataString + payloads[i].time;
     dataString = dataString + "!";
-    dataString = dataString + (mpr.readPressure()*10);
+    dataString = dataString + payloads[i].pressure;
     uint8_t data[dataString.length() + 1]; // +1 for the null terminator
     memcpy(data, dataString.c_str(), dataString.length() + 1);
 
